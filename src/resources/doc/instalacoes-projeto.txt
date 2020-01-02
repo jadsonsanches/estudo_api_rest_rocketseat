@@ -1,0 +1,4 @@
+npm init --y
+npm install express body-parser --save
+npm install --save mongoose
+npm i bcryptjs
