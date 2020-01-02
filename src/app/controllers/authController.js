@@ -81,14 +81,37 @@ router.post('/forgot_password', async (req, res) => {
             subject: 'Esqueci minha senha',
             html: `<p>Você esqueceu sua senha? Não tem problema, utilize esse token: ${token}</p>`,
         }, (err) => {
-            if(err)
+            if (err)
                 return res.status(400).send({ error: 'Não é possível enviar o email de esqueci minha senha' });
-           
+
             return res.send();
         });
     } catch (err) {
-        console.log(err);
         res.status(400).send({ error: 'Erro no esqueci minha senha, tente novamente' });
+    }
+});
+
+router.post('/reset_password', async (req, res) => {
+    const { email, token, password } = req.body;
+
+    try {
+        const user = await User.findOne({ email }).select('+passwordResetToken passwordResetExpires');
+        if (!user)
+            return res.status(400).send({ error: 'Usuário não encontrado' });
+
+        if (token !== user.passwordResetToken)
+            return res.status(400).send({ error: 'Token invalido' });
+
+        const dateNow = new Date();
+        if(dateNow > user.passwordResetExpires)
+            return res.status(400).send('Token expirado. Por favor gere um novo');
+
+        user.password = password;
+        await user.save();
+        res.send();
+
+    } catch (err) {
+        res.status(400).send({ error: 'Erro ao resetar senha, tente novamente' });
     }
 });
 
